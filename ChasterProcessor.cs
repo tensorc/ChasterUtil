@@ -6,7 +6,7 @@ using ChasterSharp;
 
 namespace ChasterUtil;
 
-public sealed class ChasterUtil
+public sealed class ChasterProcessor
 {
 
     #region  Properties
@@ -30,7 +30,7 @@ public sealed class ChasterUtil
 
     #region Constructor
 
-    public ChasterUtil(IChasterRepository chasterRepository, string? defaultBearerToken = null)
+    public ChasterProcessor(IChasterRepository chasterRepository, string? defaultBearerToken = null)
     {
         _bearerTokenIds = [];
         _lockHandlers = [];
@@ -51,7 +51,7 @@ public sealed class ChasterUtil
     {
         ArgumentNullException.ThrowIfNull(lockTokenPair);
         ArgumentNullException.ThrowIfNull(lockHandler);
-
+        
         _lockHandlers[lockTokenPair] = lockHandler;
     }
 
@@ -153,20 +153,56 @@ public sealed class ChasterUtil
         var token = GetBearerToken(bearerToken);
         var tokenId = GetBearerTokenId(bearerToken);
 
-        var history = _chasterRepository.GetUnprocessedLockHistory(tokenId).OrderBy(x => x.Log.CreatedAt);
+        var history = _chasterRepository.GetUnprocessedLockHistory(tokenId).OrderBy(x => x.Log.CreatedAt).ToList();
+
+        //TODO: I am 90% sure there is an issue with the logic here when getting instances..
+
+        var instances = history.DistinctBy(x => x.Log.LockId).Select(x =>
+                new LockInstance(this, _chasterRepository.GetLockSnapshot(x.Log.LockId, token)!.Lock, token)).ToList();
+
+        List<LockHandler> processedHandlers = [];
+        List<LockInstance> processedInstances = [];
 
         foreach (var log in history)
         {
-            LockInstance instance = new(this, _chasterRepository.GetLockSnapshot(log.Log.LockId, tokenId)!.Lock, token);
+            var instance = instances.Find(x => x.LockId == log.Log.LockId)!;
             var handler = GetLockHandler(instance, instance.LockId, tokenId);
 
-            if (handler is not null)
+            if(handler is null)
+                continue;
+
+            if (!processedHandlers.Contains(handler))
             {
-                await HandleHistoryLog(handler, instance, log);
-                instance.CommitUpdates();
+                processedHandlers.Add(handler);
+                handler.Invalidate(this, instances.Where(x => x.LockId == log.Log.LockId).ToList());
+
+                await handler.OnHandlerEnter();
             }
+
+            if (!processedInstances.Contains(instance))
+            {
+                processedInstances.Add(instance);
+                await handler.OnProcessingStarted(instance);
+            }
+
+            await HandleHistoryLog(handler, instance, log);
+        }
+
+        foreach (var instance in processedInstances)
+        {
+            var handler = GetLockHandler(instance, instance.LockId, tokenId)!;
+            await handler.OnProcessingCompleted(instance);
+            
+            instance.CommitUpdates();
+        }
+
+        foreach (var handler in processedHandlers)
+        {
+            await handler.OnHandlerExit();
         }
     }
+
+    //private void 
 
     private async Task HandleHistoryLog(LockHandler handler, LockInstance lockInstance, LockHistory log)
     {

@@ -60,6 +60,6 @@ public sealed class GuessTheTimerExtension : ChasterExtension
         if (Extension is null)
             return null;
 
-        return await Instance.Util.Client.SubmitGuessToGuessTheTimerAsync(Instance.LockId, Extension.Id, Instance.Token);
+        return await Instance.Processor.Client.SubmitGuessToGuessTheTimerAsync(Instance.LockId, Extension.Id, Instance.Token);
     }
 }

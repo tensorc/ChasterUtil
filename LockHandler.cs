@@ -5,7 +5,32 @@ namespace ChasterUtil;
 public abstract class LockHandler
 {
 
-    public virtual Task OnAllHistoryProcessed(LockInstance lockInstance)
+    public ChasterProcessor Processor { get; private set; }
+
+    public IReadOnlyList<LockInstance> Instances { get; private set; }
+
+    internal void Invalidate(ChasterProcessor processor, IReadOnlyList<LockInstance> instances)
+    {
+        Processor = processor;
+        Instances = instances;
+    }
+
+    public virtual Task OnHandlerEnter()
+    {
+        return Task.CompletedTask;
+    }
+
+    public virtual Task OnHandlerExit()
+    {
+        return Task.CompletedTask;
+    }
+
+    public virtual Task OnProcessingStarted(LockInstance lockInstance)
+    {
+        return Task.CompletedTask;
+    }
+
+    public virtual Task OnProcessingCompleted(LockInstance lockInstance)
     {
         return Task.CompletedTask;
     }

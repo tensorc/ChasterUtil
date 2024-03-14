@@ -89,7 +89,7 @@ public sealed class HygieneOpeningExtension : ChasterExtension
         if (Extension is null)
             return null;
 
-        var result = await Instance.Util.Client.GetTemporaryOpeningLockCombinationAsync(Instance.LockId, Instance.Token);
+        var result = await Instance.Processor.Client.GetTemporaryOpeningLockCombinationAsync(Instance.LockId, Instance.Token);
 
         //TODO: Cache result
 
@@ -101,7 +101,7 @@ public sealed class HygieneOpeningExtension : ChasterExtension
         if (Extension is null)
             return null;
 
-        var result = await Instance.Util.Client.GetTemporaryOpeningLockCombinationFromActionLogAsync(Instance.LockId, actionLogId, Instance.Token);
+        var result = await Instance.Processor.Client.GetTemporaryOpeningLockCombinationFromActionLogAsync(Instance.LockId, actionLogId, Instance.Token);
         
         //TODO: Cache result
 
@@ -110,12 +110,12 @@ public sealed class HygieneOpeningExtension : ChasterExtension
 
     public void SetLockCombination(string combinationId)
     {
-        Instance.Util.LogSetTemporaryCombinationAction(Instance, combinationId);
+        Instance.Processor.LogSetTemporaryCombinationAction(Instance, combinationId);
     }
 
     public void TemporarilyUnlock()
     {
-        Instance.Util.LogTemporarilyUnlockAction(Instance);
+        Instance.Processor.LogTemporarilyUnlockAction(Instance);
     }
 
 }

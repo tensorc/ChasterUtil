@@ -182,22 +182,22 @@ public sealed class TasksExtension : ChasterExtension
 
     public void ResolveTask(bool isCompleted)
     {
-       Instance.Util.LogResolveTaskAction(Instance, isCompleted);
+       Instance.Processor.LogResolveTaskAction(Instance, isCompleted);
     }
 
     public void AssignTask(LockTask task)
     {
-        Instance.Util.LogAssignTaskAction(Instance, new LockAssignTaskUpdate { SpecificTask = task } );
+        Instance.Processor.LogAssignTaskAction(Instance, new LockAssignTaskUpdate { SpecificTask = task } );
     }
 
     public void AssignRandomTask()
     {
-        Instance.Util.LogAssignTaskAction(Instance, new LockAssignTaskUpdate { IsRandomTask = true });
+        Instance.Processor.LogAssignTaskAction(Instance, new LockAssignTaskUpdate { IsRandomTask = true });
     }
 
     public void AssignVoteTask(TimeSpan duration)
     {
-        Instance.Util.LogAssignTaskAction(Instance, new LockAssignTaskUpdate { IsVoteTask = true, VoteTaskDuration = duration });
+        Instance.Processor.LogAssignTaskAction(Instance, new LockAssignTaskUpdate { IsVoteTask = true, VoteTaskDuration = duration });
     }
 
 }

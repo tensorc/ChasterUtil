@@ -48,7 +48,7 @@ public sealed class PilloryExtension : ChasterExtension
         if (duration.TotalMinutes < 15)
             throw new ArgumentOutOfRangeException(nameof(duration));
 
-        Instance.Util.LogUpdatePilloryAction(Instance, reason, duration);
+        Instance.Processor.LogUpdatePilloryAction(Instance, reason, duration);
     }
 
     public async Task<ApiResult<List<PilloryVoteInfoActionRepDto>?>?> GetVoteInfoAsync()
@@ -56,7 +56,7 @@ public sealed class PilloryExtension : ChasterExtension
         if (Extension is null)
             return null;
 
-        return await Instance.Util.Client.GetPilloryVoteInfoAsync(Instance.LockId, Extension.Id, Instance.Token);
+        return await Instance.Processor.Client.GetPilloryVoteInfoAsync(Instance.LockId, Extension.Id, Instance.Token);
     }
 
 }

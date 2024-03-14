@@ -43,7 +43,7 @@ public sealed class LockInstance
 
     internal string TokenId { get; }
 
-    internal ChasterUtil Util { get; }
+    internal ChasterProcessor Processor { get; }
 
     #endregion
 
@@ -79,13 +79,13 @@ public sealed class LockInstance
 
     #endregion
 
-    public LockInstance(ChasterUtil chasterUtil, Lock @lock, string token)
+    public LockInstance(ChasterProcessor processor, Lock @lock, string token)
     {
         _lock = @lock;
 
-        Util = chasterUtil;
+        Processor = processor;
         Token = token;
-        TokenId = Util.GetBearerTokenId(Token);
+        TokenId = Processor.GetBearerTokenId(Token);
         IsLocked = @lock.Status == LockStatus.Locked;
         IsArchived = ArchivedDateTime.HasValue;
         IsFrozen = @lock.IsFrozen;
@@ -182,17 +182,17 @@ public sealed class LockInstance
     public void CommitUpdates()
     {
         if (_lock.Status == LockStatus.Locked && !IsLocked)
-            Util.LogUnlockAction(this);
+            Processor.LogUnlockAction(this);
 
         if (IsKeyholderLock)
         {
             if (_lock.KeyholderArchivedAt.HasValue != IsArchived && !IsLocked)
-                Util.LogArchiveAction(this);
+                Processor.LogArchiveAction(this);
         }
         else
         {
             if (_lock.ArchivedAt.HasValue != IsArchived)
-                Util.LogArchiveAction(this);
+                Processor.LogArchiveAction(this);
         }
         
         if (!IsLocked)
@@ -208,22 +208,22 @@ public sealed class LockInstance
         if (IsKeyholderLock)
         {
             if (IsFrozen != _lock.IsFrozen)
-                Util.LogUpdateFreezeAction(this, IsFrozen);
+                Processor.LogUpdateFreezeAction(this, IsFrozen);
 
             if (_lock.DisplayRemainingTime != DisplayRemainingTime || _lock.HideTimeLogs != HideTimeLogs)
-                Util.LogUpdateSettingsAction(this, DisplayRemainingTime, HideTimeLogs);
+                Processor.LogUpdateSettingsAction(this, DisplayRemainingTime, HideTimeLogs);
         }
         else
         {
             if(IsTrusted != _lock.Trusted)
-                Util.LogTrustKeyholderAction(this);
+                Processor.LogTrustKeyholderAction(this);
 
             if (MaxLimitDateTime != _lock.MaxLimitDate)
-                Util.LogUpdateMaxTimeLimitAction(this, MaxLimitDateTime);
+                Processor.LogUpdateMaxTimeLimitAction(this, MaxLimitDateTime);
         }
 
         if ((int)_timeAdjustment.TotalSeconds != 0)
-            Util.LogAddRemoveTimeAction(this, _timeAdjustment);
+            Processor.LogAddRemoveTimeAction(this, _timeAdjustment);
     }
 
     private void CommitExtensionUpdates()
@@ -241,7 +241,7 @@ public sealed class LockInstance
             Extensions = extensions.Where(x => x.IsEnabled).Select(x => x.GetLockExtensionConfig()).ToList()
         };
 
-        Util.LogUpdateExtensionsAction(this, dto);
+        Processor.LogUpdateExtensionsAction(this, dto);
     }
 
     private void CommitTaskUpdates()
@@ -253,7 +253,7 @@ public sealed class LockInstance
 
         var taskParams = Tasks.UserTasks.Select(x => new TaskActionParamsModel { Points = x.Points, Task = x.Task }).ToList();
 
-        Util.LogUpdateTasksAction(this, taskParams);
+        Processor.LogUpdateTasksAction(this, taskParams);
     }
 
 }

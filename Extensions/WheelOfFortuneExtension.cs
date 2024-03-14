@@ -77,6 +77,6 @@ public sealed class WheelOfFortuneExtension : ChasterExtension
         if (Extension is null)
             return null;
 
-        return await Instance.Util.Client.SpinWheelOfFortuneAsync(Instance.LockId, Extension.Id, Instance.Token);
+        return await Instance.Processor.Client.SpinWheelOfFortuneAsync(Instance.LockId, Extension.Id, Instance.Token);
     }
 }

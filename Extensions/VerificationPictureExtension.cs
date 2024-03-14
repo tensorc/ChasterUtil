@@ -104,7 +104,7 @@ public sealed class VerificationPictureExtension : ChasterExtension
         if (Extension is null)
             return null;
 
-        var result = await Instance.Util.Client.GetVerificationPicturesAsync(Instance.LockId, Instance.Token);
+        var result = await Instance.Processor.Client.GetVerificationPicturesAsync(Instance.LockId, Instance.Token);
 
         //TODO: Cache result
 
@@ -113,12 +113,12 @@ public sealed class VerificationPictureExtension : ChasterExtension
 
     public void UploadVerificationPicture(byte[] data, string? contentType = null)
     {
-        Instance.Util.LogUploadVerificationPictureAction(Instance, data, contentType);
+        Instance.Processor.LogUploadVerificationPictureAction(Instance, data, contentType);
     }
 
     public void CreateVerificationRequest()
     {
-        Instance.Util.LogCreateVerificationRequestAction(Instance);
+        Instance.Processor.LogCreateVerificationRequestAction(Instance);
     }
 
 }

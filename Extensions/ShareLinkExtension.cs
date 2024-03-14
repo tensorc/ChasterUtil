@@ -99,7 +99,7 @@ public sealed class ShareLinkExtension : ChasterExtension
         if (Extension is null)
             return null;
 
-        var result = await Instance.Util.Client.GetShareLinkAsync(Instance.LockId, Extension.Id, Instance.Token);
+        var result = await Instance.Processor.Client.GetShareLinkAsync(Instance.LockId, Extension.Id, Instance.Token);
 
         //TODO: Cache result
 
@@ -111,7 +111,7 @@ public sealed class ShareLinkExtension : ChasterExtension
         if (Extension is null)
             return null;
 
-        var result = await Instance.Util.Client.GetShareLinkInfoAsync(Instance.LockId, Extension.Id, Instance.Token);
+        var result = await Instance.Processor.Client.GetShareLinkInfoAsync(Instance.LockId, Extension.Id, Instance.Token);
 
         //TODO: Cache result
 

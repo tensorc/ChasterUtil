@@ -70,6 +70,6 @@ public sealed class DiceExtension : ChasterExtension
         if (Extension is null)
             return null;
 
-        return await Instance.Util.Client.RollDiceAsync(Instance.LockId, Extension.Id, Instance.Token);
+        return await Instance.Processor.Client.RollDiceAsync(Instance.LockId, Extension.Id, Instance.Token);
     }
 }
