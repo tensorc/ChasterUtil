@@ -94,14 +94,23 @@ public sealed class ShareLinkExtension : ChasterExtension
         };
     }
 
-    public async Task<ApiResult<string?>?> GetShareLinkAsync()
+    public async Task<ApiResult<string?>?> GetShareLinkAsync(bool bypassCache = false)
     {
         if (Extension is null)
             return null;
 
+        if (!bypassCache)
+        {
+            var shareLink = Instance.Processor.ChasterRepository.GetShareLink(Instance.LockId);
+
+            if (!string.IsNullOrEmpty(shareLink))
+                return new ApiResult<string?>(shareLink, null, null);
+        }
+
         var result = await Instance.Processor.Client.GetShareLinkAsync(Instance.LockId, Extension.Id, Instance.Token);
 
-        //TODO: Cache result
+        if(result.HttpResponse is not null && result.HttpResponse.IsSuccessStatusCode && !string.IsNullOrEmpty(result.Value))
+             Instance.Processor.ChasterRepository.UpsertShareLink(new CachedShareLink {Id = Instance.LockId, ShareLink = result.Value });
 
         return result;
     }

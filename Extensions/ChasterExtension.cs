@@ -58,7 +58,7 @@ public abstract class ChasterExtension(ExtensionPartyForPublic? extension, LockI
         return actions;
     }
 
-    internal static List<JsonElement>? PenaltyActionsToPunishments(PenaltyActions actions)
+    internal static List<JsonElement> PenaltyActionsToPunishments(PenaltyActions actions)
     {
         var punishments = new List<JsonElement>();
 

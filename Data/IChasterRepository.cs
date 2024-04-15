@@ -9,6 +9,8 @@ public interface IChasterRepository
 
     public List<LockHistory> GetUnprocessedLockHistory(string tokenId);
 
+    public bool HasUnprocessedLockHistory(string lockId, string tokenId);
+
     public void InsertLockHistory(List<LockHistory> lockHistory);
 
     public void MarkLockHistoryAsProcessed(LockHistory lockHistory);
@@ -42,6 +44,16 @@ public interface IChasterRepository
     public void InsertLockUpdate(LockUpdate lockUpdate);
 
     public void UpsertLockUpdate(LockUpdate lockUpdate);
+
+    #endregion
+
+    #region Caching
+
+    public string? GetShareLink(string lockId);
+
+    public void DeleteShareLink(string lockId);
+
+    public void UpsertShareLink(CachedShareLink cachedShareLink);
 
     #endregion
 

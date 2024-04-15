@@ -8,6 +8,8 @@ public sealed class LockSnapshot
 
     public string TokenId { get; set; } = string.Empty;
 
+    public Guid UpdateGuid { get; set; } = Guid.Empty;
+
     public bool IsActive { get; set; }
 
     public Lock Lock { get; set; } = new();

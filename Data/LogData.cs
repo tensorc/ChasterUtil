@@ -9,3 +9,4 @@ public sealed class LogData(LockHistory lockHistory)
     public LogForPublic Log => lockHistory.Log;
 
 }
+

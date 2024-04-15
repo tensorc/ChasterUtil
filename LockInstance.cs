@@ -2,7 +2,7 @@
 
 namespace ChasterUtil;
 
-public sealed class LockInstance
+public sealed class LockInstance : IEquatable<LockInstance>
 {
 
     #region Properties
@@ -28,6 +28,8 @@ public sealed class LockInstance
     public TimeSpan? TimeFrozen => ServerDateTime - _lock.FrozenAt;
 
     public TimeSpan? TimeRemaining => GetTimeRemaining();
+
+    public DateTimeOffset? UnlockDate => TimeRemaining.HasValue ? ServerDateTime.Add(TimeRemaining.Value) : null;
 
     public DateTimeOffset ServerDateTime => new(DateTime.UtcNow, _lock.StartDate.Offset);
 
@@ -255,5 +257,40 @@ public sealed class LockInstance
 
         Processor.LogUpdateTasksAction(this, taskParams);
     }
+
+    #region Equality
+
+    public override bool Equals(object? obj)
+    {
+        return ReferenceEquals(this, obj) || obj is LockInstance other && LockId == other.LockId && TokenId == other.TokenId;
+    }
+
+    public bool Equals(LockInstance? other)
+    {
+        return ReferenceEquals(this, other) || other is not null && LockId == other.LockId && TokenId == other.TokenId;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(LockId, TokenId);
+    }
+
+    public static bool operator ==(LockInstance? obj1, LockInstance? obj2)
+    {
+        if (ReferenceEquals(obj1, obj2))
+            return true;
+
+        if (obj1 is null || obj2 is null)
+            return false;
+
+        return obj1.Equals(obj2);
+    }
+
+    public static bool operator !=(LockInstance? obj1, LockInstance? obj2)
+    {
+        return !(obj1 == obj2);
+    }
+
+    #endregion
 
 }

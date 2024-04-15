@@ -2,17 +2,19 @@
 
 namespace ChasterUtil;
 
-public abstract class LockHandler
+public abstract class LockHandler(string? bearerToken = null) : IEquatable<LockHandler>
 {
+    public abstract string Name { get; }
 
-    public ChasterProcessor Processor { get; private set; }
+    public ChasterProcessor Processor { get; internal set; }
 
-    public IReadOnlyList<LockInstance> Instances { get; private set; }
+    public string BearerToken => bearerToken ?? string.Empty;
 
-    internal void Invalidate(ChasterProcessor processor, IReadOnlyList<LockInstance> instances)
+    public IReadOnlyList<LockInstance> Instances { get; private set; } = [];
+
+    internal void Invalidate()
     {
-        Processor = processor;
-        Instances = instances;
+        Instances = Processor.GetLockHandlerInstances(this, BearerToken);
     }
 
     public virtual Task OnHandlerEnter()
@@ -21,6 +23,11 @@ public abstract class LockHandler
     }
 
     public virtual Task OnHandlerExit()
+    {
+        return Task.CompletedTask;
+    }
+
+    public virtual Task OnHandlerUpdate()
     {
         return Task.CompletedTask;
     }
@@ -132,7 +139,7 @@ public abstract class LockHandler
         return Task.CompletedTask;
     }
 
-    public virtual Task OnTaskAssigned(LockInstance lockInstance, LogData logData, LogTaskAssignedPayload payload)
+    public virtual Task OnTaskAssigned(LockInstance lockInstance, LogData logData, AssignTaskActionModel payload)
     {
         return Task.CompletedTask;
     }
@@ -194,4 +201,38 @@ public abstract class LockHandler
 
     #endregion
 
+    #region Equality
+
+    public override bool Equals(object? obj)
+    {
+        return ReferenceEquals(this, obj) || obj is LockHandler other && Name == other.Name && BearerToken == other.BearerToken;
+    }
+
+    public bool Equals(LockHandler? other)
+    {
+        return ReferenceEquals(this, other) || other is not null && Name == other.Name && BearerToken == other.BearerToken;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Name, BearerToken);
+    }
+
+    public static bool operator ==(LockHandler? obj1, LockHandler? obj2)
+    {
+        if (ReferenceEquals(obj1, obj2))
+            return true;
+
+        if (obj1 is null || obj2 is null)
+            return false;
+
+        return obj1.Equals(obj2);
+    }
+
+    public static bool operator !=(LockHandler? obj1, LockHandler? obj2)
+    {
+        return !(obj1 == obj2);
+    }
+
+    #endregion
 }
