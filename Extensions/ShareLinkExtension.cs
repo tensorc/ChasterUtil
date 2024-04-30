@@ -62,7 +62,7 @@ public sealed class ShareLinkExtension : ChasterExtension
         }
     }
 
-    public ShareLinkExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
+    internal ShareLinkExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
     {
         if (extension == null) return;
         var config = extension.Config.Deserialize<ShareLinkConfig>()!;

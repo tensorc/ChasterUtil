@@ -18,7 +18,7 @@ public sealed class PilloryExtension : ChasterExtension
         }
     }
 
-    public PilloryExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
+    internal PilloryExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
     {
         if (extension == null) return;
         var config = extension.Config.Deserialize<PilloryConfig>()!;
@@ -43,9 +43,9 @@ public sealed class PilloryExtension : ChasterExtension
         };
     }
 
-    public void SendToPillory(TimeSpan duration, string? reason = null)
+    public void SendToPillory(TimeSpan duration, string reason)
     {
-        if (duration.TotalMinutes < 15)
+        if (duration < TimeSpan.FromMinutes(15) || duration > TimeSpan.FromDays(1))
             throw new ArgumentOutOfRangeException(nameof(duration));
 
         Instance.Processor.LogUpdatePilloryAction(Instance, reason, duration);

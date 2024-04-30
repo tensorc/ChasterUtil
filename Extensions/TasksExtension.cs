@@ -106,7 +106,7 @@ public sealed class TasksExtension : ChasterExtension
 
     public TasksUserData UserData { get; } = new();
 
-    public TasksExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
+    internal TasksExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
     {
         if (extension == null)
         {

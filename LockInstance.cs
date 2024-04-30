@@ -225,7 +225,10 @@ public sealed class LockInstance : IEquatable<LockInstance>
         }
 
         if ((int)_timeAdjustment.TotalSeconds != 0)
+        {
             Processor.LogAddRemoveTimeAction(this, _timeAdjustment);
+            _timeAdjustment = TimeSpan.Zero;
+        }
     }
 
     private void CommitExtensionUpdates()

@@ -49,7 +49,7 @@ public sealed class ChasterProcessor
         _defaultBearerToken = defaultBearerToken;
 
         ChasterRepository = chasterRepository;
-        Client = new ChasterClient(_pollyHttpClient, _defaultBearerToken); 
+        Client = new ChasterClient(_pollyHttpClient, _defaultBearerToken);
     }
 
     #endregion
@@ -157,7 +157,7 @@ public sealed class ChasterProcessor
 
             foreach (var handler in lockHandlers)
             {
-                if(!affectedLockHandlers.Contains(handler!))
+                if (!affectedLockHandlers.Contains(handler!))
                     affectedLockHandlers.Add(handler!);
             }
 
@@ -179,20 +179,19 @@ public sealed class ChasterProcessor
             return;
 
         snapshot.Lock = @lock;
-        snapshot.UpdateGuid = updateGuid ?? Guid.Empty; 
+        snapshot.UpdateGuid = updateGuid ?? Guid.Empty;
         ChasterRepository.UpsertLockSnapshot(snapshot);
     }
 
     public void DeactivateSnapshotsWithoutUpdateGuid(Guid updateGuid, string? bearerToken = null)
     {
-        var token = GetBearerToken(bearerToken);
         var tokenId = GetBearerTokenId(bearerToken);
 
         var snapshots = ChasterRepository.GetActiveLockSnapshots(tokenId);
 
         foreach (var snapshot in snapshots)
         {
-            if(snapshot.UpdateGuid != updateGuid)
+            if (snapshot.UpdateGuid != updateGuid)
                 ChasterRepository.MarkLockSnapshotAsInactive(snapshot);
         }
     }
@@ -200,7 +199,7 @@ public sealed class ChasterProcessor
     #endregion
 
     #region Lock History
-     
+
     internal List<LockInstance> GetLockHandlerInstances(LockHandler handler, string? bearerToken = null)
     {
         var token = GetBearerToken(bearerToken);
@@ -227,7 +226,7 @@ public sealed class ChasterProcessor
         var instances = GetAllInstances(bearerToken);
 
         var history = ChasterRepository.GetUnprocessedLockHistory(tokenId).OrderBy(x => x.Log.CreatedAt).ToList();
-  
+
         List<LockHandler> processedHandlers = [];
         List<LockInstance> processedInstances = [];
 
@@ -265,12 +264,12 @@ public sealed class ChasterProcessor
 
             instance.CommitUpdates();
 
-            if (instance.Lock.Status == LockStatus.Locked) 
+            if (instance.Lock.Status == LockStatus.Locked)
                 continue;
 
             var snapshot = ChasterRepository.GetLockSnapshot(instance.Lock.Id, tokenId);
 
-            if(snapshot is null)
+            if (snapshot is null)
                 continue;
 
             ChasterRepository.MarkLockSnapshotAsInactive(snapshot);
@@ -376,7 +375,10 @@ public sealed class ChasterProcessor
                 await handler.OnPilloryEnded(lockInstance, new LogData(log), payload.Deserialize<LogPilloryEndedPayload>()!);
                 break;
             case LogType.WheelOfFortuneTurned:
-                await handler.OnWheelOfFortuneTurned(lockInstance, new LogData(log), payload.Deserialize<LogWheelOfFortuneTurnedPayload>()!);
+                var segmentPayload = WheelOfFortuneExtension.GetWheelOfFortuneSegment(payload.Deserialize<LogWheelOfFortuneTurnedPayload>()!.Segment);
+
+                if(segmentPayload is not null)
+                    await handler.OnWheelOfFortuneTurned(lockInstance, new LogData(log), segmentPayload);
                 break;
             case LogType.TimerGuessed:
                 await handler.OnTimerGuessed(lockInstance, new LogData(log));
@@ -439,7 +441,7 @@ public sealed class ChasterProcessor
 
         ChasterRepository.InsertLockHistory(logs);
 
-        if(snapshot.Lock.Status != LockStatus.Locked && !ChasterRepository.HasUnprocessedLockHistory(snapshot.Lock.Id, tokenId))
+        if (snapshot.Lock.Status != LockStatus.Locked && !ChasterRepository.HasUnprocessedLockHistory(snapshot.Lock.Id, tokenId))
             ChasterRepository.MarkLockSnapshotAsInactive(snapshot);
     }
 
@@ -522,7 +524,7 @@ public sealed class ChasterProcessor
                             var lockExtensionsUpdate = action.Payload!.Value.Deserialize<LockExtensionsUpdate>()!;
                             var updateLockExtensionsResult = await Client.UpdateLockExtensionsAsync(action.LockId, lockExtensionsUpdate.ExtensionData, token);
 
-                            if(!lockExtensionsUpdate.ExtensionData.Extensions.Exists(x => x.GetExtensionSlug() == ExtensionSlug.ShareLink))
+                            if (!lockExtensionsUpdate.ExtensionData.Extensions.Exists(x => x.GetExtensionSlug() == ExtensionSlug.ShareLink))
                                 ChasterRepository.DeleteShareLink(@lock.Id);
 
                             if (updateLockExtensionsResult.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Unauthorized or HttpStatusCode.NotFound)
@@ -780,17 +782,26 @@ public sealed class ChasterProcessor
         ChasterRepository.UpsertLockUpdate(action);
     }
 
-    internal void LogUpdatePilloryAction(LockInstance instance, string? reason, TimeSpan duration)
+    internal void LogUpdatePilloryAction(LockInstance instance, string reason, TimeSpan duration)
     {
-        var action = ChasterRepository.GetLockUpdate(instance.LockId, instance.TokenId, LockUpdateType.Pillory) ??
-                     LockUpdate.Create(instance, LockUpdateType.Pillory);
+        var action = ChasterRepository.GetLockUpdate(instance.LockId, instance.TokenId, LockUpdateType.Pillory);
+        var durationToAssign = duration;
 
-        var newValue = duration;
+        if (action is null)
+        {
+            action = LockUpdate.Create(instance, LockUpdateType.Pillory);
+        }
+        else
+        {
+            var payloadDuration = action.Payload!.Value.Deserialize<LockPilloryUpdate>()!.Duration;
 
-        if (action.Payload.HasValue)
-            newValue += action.Payload.Value.Deserialize<LockPilloryUpdate>()!.Duration;
+            if (durationToAssign + payloadDuration > TimeSpan.FromDays(1))
+                action = LockUpdate.Create(instance, LockUpdateType.Pillory);
+            else
+                durationToAssign += payloadDuration;
+        }
 
-        action.Payload = JsonSerializer.SerializeToElement(new LockPilloryUpdate { Duration = newValue, Reason = reason });
+        action.Payload = JsonSerializer.SerializeToElement(new LockPilloryUpdate { Duration = durationToAssign, Reason = reason });
         ChasterRepository.UpsertLockUpdate(action);
     }
 
@@ -868,7 +879,7 @@ public sealed class ChasterProcessor
             await handler.Value.OnHandlerUpdate();
         }
     }
-    
+
     #endregion
 
     private LockHandler? GetLockHandler(Lock @lock, string tokenId)

@@ -18,7 +18,7 @@ public sealed class RandomEventsExtension : ChasterExtension
         }
     }
 
-    public RandomEventsExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
+    internal RandomEventsExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
     {
         if (extension == null) return;
         var config = extension.Config.Deserialize<RandomEventsConfig>()!;

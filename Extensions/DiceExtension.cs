@@ -39,7 +39,7 @@ public sealed class DiceExtension : ChasterExtension
         }
     }
 
-    public DiceExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
+    internal DiceExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
     {
         if(extension == null) return;
         var config = extension.Config.Deserialize<DiceConfig>()!;

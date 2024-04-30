@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Text.Json;
 using ChasterSharp;
 
@@ -33,7 +34,7 @@ public sealed class WheelOfFortuneExtension : ChasterExtension
 
     public ObservableCollection<WheelOfFortuneSegment> Segments { get; }
 
-    public WheelOfFortuneExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
+    internal WheelOfFortuneExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
     {
         if (extension == null)
         {
@@ -47,8 +48,30 @@ public sealed class WheelOfFortuneExtension : ChasterExtension
         _extensionMode = extension.Mode;
         _regularity = TimeSpan.FromSeconds(extension.Regularity);
 
-        Segments = new ObservableCollection<WheelOfFortuneSegment>(config.Segments);
+        var segments = config.Segments.Select(GetWheelOfFortuneSegment).Where(x => x != null).Select(x => x!).ToList();
+        segments.ForEach(x => x.PropertyChanged += SegmentPropertyChanged);
+
+        Segments = new ObservableCollection<WheelOfFortuneSegment>(segments);
         Segments.CollectionChanged += Segments_CollectionChanged;
+    }
+
+    internal static WheelOfFortuneSegment? GetWheelOfFortuneSegment(WheelOfFortuneSegmentModel? segment)
+    {
+        if(segment is null)
+            return null;
+
+        return segment.Type switch
+        {
+            WheelOfFortuneSegmentType.Freeze => new WheelOfFortuneFreezeSegment(),
+            WheelOfFortuneSegmentType.Unfreeze => new WheelOfFortuneUnfreezeSegment(),
+            WheelOfFortuneSegmentType.ToggleFreeze => new WheelOfFortuneToggleFreezeSegment(),
+            WheelOfFortuneSegmentType.AddTime => new WheelOfFortuneAddTimeSegment(segment),
+            WheelOfFortuneSegmentType.RemoveTime => new WheelOfFortuneRemoveTimeSegment(segment),
+            WheelOfFortuneSegmentType.AddRemoveTime => new WheelOfFortuneAddRemoveTimeSegment(segment),
+            WheelOfFortuneSegmentType.Text => new WheelOfFortuneTextSegment(segment),
+            WheelOfFortuneSegmentType.Pillory => new WheelOfFortunePillorySegment(segment),
+            _ => null
+        };
     }
 
     private void Segments_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -56,11 +79,16 @@ public sealed class WheelOfFortuneExtension : ChasterExtension
         if(IsEnabled) IsModified = true;
     }
 
+    private void SegmentPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (IsEnabled) IsModified = true;
+    }
+
     internal override LockExtensionConfigDto GetLockExtensionConfig()
     {
         var config = new WheelOfFortuneConfig
         {
-            Segments = Segments.ToList()
+            Segments = Segments.Select(x => x.GetWheelOfFortuneSegmentModel()).ToList()
         };
 
         return new LockExtensionConfigDto

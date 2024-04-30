@@ -56,7 +56,7 @@ public sealed class VerificationPictureExtension : ChasterExtension
 
     public VerificationPictureUserData UserData { get; } = new();
 
-    public VerificationPictureExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
+    internal VerificationPictureExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
     {
         if (extension == null)
         {

@@ -53,7 +53,7 @@ public sealed class HygieneOpeningExtension : ChasterExtension
 
     public HygieneOpeningUserData UserData { get; } = new();
 
-    public HygieneOpeningExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
+    internal HygieneOpeningExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
     {
         if (extension == null) return;
         

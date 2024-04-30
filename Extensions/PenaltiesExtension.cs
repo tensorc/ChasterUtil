@@ -20,7 +20,7 @@ public sealed class PenaltiesExtension : ChasterExtension
 
     public PenaltiesUserData UserData { get; } = new();
 
-    public PenaltiesExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
+    internal PenaltiesExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
     {
         DiceFrequencyPenalty? diceFrequency = null;
         HygieneOpeningFrequencyPenalty? hygieneOpeningFrequency = null;

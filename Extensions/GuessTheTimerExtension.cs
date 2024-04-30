@@ -29,7 +29,7 @@ public sealed class GuessTheTimerExtension : ChasterExtension
         }
     }
 
-    public GuessTheTimerExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
+    internal GuessTheTimerExtension(ExtensionPartyForPublic? extension, LockInstance lockInstance) : base(extension, lockInstance)
     {
         if (extension == null) return;
         var config = extension.Config.Deserialize<GuessTheTimerConfig>()!;

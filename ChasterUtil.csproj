@@ -12,13 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="ChasterSharp">
-      <HintPath>..\ChasterSharp\bin\Release\net8.0\ChasterSharp.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Segments\" />
+    <ProjectReference Include="..\ChasterSharp\ChasterSharp.csproj" />
   </ItemGroup>
 
 </Project>

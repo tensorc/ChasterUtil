@@ -189,7 +189,7 @@ public abstract class LockHandler(string? bearerToken = null) : IEquatable<LockH
         return Task.CompletedTask;
     }
 
-    public virtual Task OnWheelOfFortuneTurned(LockInstance lockInstance, LogData logData, LogWheelOfFortuneTurnedPayload payload)
+    public virtual Task OnWheelOfFortuneTurned(LockInstance lockInstance, LogData logData, WheelOfFortuneSegment payload)
     {
         return Task.CompletedTask;
     }
