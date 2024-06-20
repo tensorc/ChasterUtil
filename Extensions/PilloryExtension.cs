@@ -45,6 +45,13 @@ public sealed class PilloryExtension : ChasterExtension
 
     public void SendToPillory(TimeSpan duration, string reason)
     {
+        //TODO: Remove the clamps here and allow an exception to be thrown?
+
+        if (duration < TimeSpan.FromMinutes(15))
+            duration = TimeSpan.FromMinutes(15);
+        else if(duration > TimeSpan.FromDays(1))
+            duration = TimeSpan.FromDays(1);
+
         if (duration < TimeSpan.FromMinutes(15) || duration > TimeSpan.FromDays(1))
             throw new ArgumentOutOfRangeException(nameof(duration));
 

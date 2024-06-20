@@ -1,4 +1,6 @@
-﻿namespace ChasterUtil;
+﻿using System.Security.Cryptography.X509Certificates;
+
+namespace ChasterUtil;
 
 public interface IChasterRepository
 {
@@ -12,6 +14,8 @@ public interface IChasterRepository
     public bool HasUnprocessedLockHistory(string lockId, string tokenId);
 
     public void InsertLockHistory(List<LockHistory> lockHistory);
+
+    public bool ContainsLockHistoryId(string id);
 
     public void MarkLockHistoryAsProcessed(LockHistory lockHistory);
 

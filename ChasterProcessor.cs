@@ -125,6 +125,8 @@ public sealed class ChasterProcessor
 
         var result = await Client.GetLocksAsync(lockStatus, token);
 
+        EnsureApiResult(result);
+
         result.Value?.ForEach(x => UpsertLockSnapshot(x, tokenId, updateGuid));
         result.Value?.Select(x => GetLockHandler(x, tokenId)).Where(x => x is not null).Distinct().ToList().ForEach(x => x?.Invalidate());
     }
@@ -149,10 +151,9 @@ public sealed class ChasterProcessor
             dto.Page = pageNumber++;
             var result = await Client.SearchLockedUsersAsync(dto, token);
 
-            if (result.Value is null)
-                break;
+            EnsureApiResult(result);
 
-            result.Value.Locks.ForEach(x => UpsertLockSnapshot(x, tokenId, updateGuid));
+            result.Value!.Locks.ForEach(x => UpsertLockSnapshot(x, tokenId, updateGuid));
             var lockHandlers = result.Value.Locks.Select(x => GetLockHandler(x, tokenId)).Where(x => x is not null).ToList();
 
             foreach (var handler in lockHandlers)
@@ -245,23 +246,28 @@ public sealed class ChasterProcessor
             if (!processedHandlers.Contains(handler))
             {
                 processedHandlers.Add(handler);
+
                 await handler.OnHandlerEnter();
+                instance.CommitUpdates();
             }
 
             if (!processedInstances.Contains(instance))
             {
                 processedInstances.Add(instance);
+
                 await handler.OnProcessingStarted(instance);
+                instance.CommitUpdates();
             }
 
             await HandleHistoryLog(handler, instance, log);
+            instance.CommitUpdates();
         }
 
         foreach (var instance in processedInstances)
         {
             var handler = GetLockHandler(instance.Lock, tokenId)!;
-            await handler.OnProcessingCompleted(instance);
 
+            await handler.OnProcessingCompleted(instance);
             instance.CommitUpdates();
 
             if (instance.Lock.Status == LockStatus.Locked)
@@ -297,6 +303,7 @@ public sealed class ChasterProcessor
                 await handler.OnDeserted(lockInstance, new LogData(log));
                 break;
             case LogType.KeyholderTrusted:
+                lockInstance.OverrideTrusted(); //NOTE: Possible race condition here, so let's guarantee a Trusted status
                 await handler.OnKeyholderTrusted(lockInstance, new LogData(log));
                 break;
             case LogType.SessionOfferAccepted:
@@ -422,15 +429,15 @@ public sealed class ChasterProcessor
         {
             var result = await Client.GetLockHistoryAsync(snapshot.Lock.Id, dto, token);
 
-            if (result.HttpResponse is null || !result.HttpResponse.IsSuccessStatusCode || result.Value is null)
-                return;
+            EnsureApiResult(result);
 
-            var indexOfKnownRecord = result.Value.Results.FindIndex(x => x.Id == latestLogId);
+            var indexOfKnownRecord = result.Value!.Results.FindIndex(x => x.Id == latestLogId);
             var stopIndex = indexOfKnownRecord == -1 ? result.Value.Results.Count : indexOfKnownRecord;
 
             for (var i = 0; i < stopIndex; i++)
             {
-                logs.Add(new LockHistory { Id = result.Value.Results[i].Id, TokenId = tokenId, Log = result.Value.Results[i] });
+                if(!ChasterRepository.ContainsLockHistoryId(result.Value.Results[i].Id))
+                    logs.Add(new LockHistory { Id = result.Value.Results[i].Id, TokenId = tokenId, Log = result.Value.Results[i] });
             }
 
             if (indexOfKnownRecord != -1 || !result.Value.HasMore)
@@ -896,6 +903,17 @@ public sealed class ChasterProcessor
         }
 
         return handler;
+    }
+
+    private static void EnsureApiResult<T>(ApiResult<T> result)
+    {
+        if (result.HttpResponse is null)
+            throw new InvalidOperationException($"{nameof(result.HttpResponse)} is null.");
+
+        result.HttpResponse.EnsureSuccessStatusCode();
+
+        if (result.Value is null)
+            throw new InvalidOperationException($"{nameof(result.Value)} is null.");
     }
 
 }

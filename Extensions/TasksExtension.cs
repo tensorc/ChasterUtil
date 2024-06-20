@@ -80,7 +80,7 @@ public sealed class TasksExtension : ChasterExtension
         }
     }
 
-    private bool _allowWearerToChoose;
+    private bool _allowWearerToChoose = true;
     public bool AllowWearerToChoose
     {
         get => _allowWearerToChoose;
@@ -128,6 +128,7 @@ public sealed class TasksExtension : ChasterExtension
         _allowWearerToEdit = config.AllowWearerToEditTasks;
         _allowWearerToAssign = !config.PreventWearerFromAssigningTasks;
         _allowWearerToConfigure = config.AllowWearerToConfigureTasks;
+        _allowWearerToChoose = config.AllowWearerToChooseTasks;
 
         var lockTasks = UserData.UserTasks.Select(x => new LockTask(x.Points, x.Task!)).ToList();
         lockTasks.ForEach(x => x.PropertyChanged += TaskPropertyChanged);

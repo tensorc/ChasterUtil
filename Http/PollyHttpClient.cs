@@ -34,7 +34,7 @@ public sealed class PollyHttpClient : HttpClient
     {
         var retryOptions = new RetryStrategyOptions<HttpResponseMessage>
         {
-            MaxRetryAttempts = 4,
+            MaxRetryAttempts = 6,
             ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
                 .HandleResult(r => r.StatusCode is >= HttpStatusCode.InternalServerError or HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests)
                 .Handle<HttpRequestException>(ex => ex.StatusCode is HttpStatusCode.InternalServerError or HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests)
@@ -44,7 +44,8 @@ public sealed class PollyHttpClient : HttpClient
 
         var timeoutOptions = new TimeoutStrategyOptions
         {
-            Timeout = TimeSpan.FromSeconds(5)
+            //Timeout = TimeSpan.FromSeconds(5)
+            Timeout = TimeSpan.FromSeconds(3)
         };
 
         var pipeline = new ResiliencePipelineBuilder<HttpResponseMessage>().AddRetry(retryOptions).AddTimeout(timeoutOptions);
@@ -79,7 +80,8 @@ public sealed class PollyHttpClient : HttpClient
             return new ValueTask<TimeSpan?>(delay);
         }
 
-        return new ValueTask<TimeSpan?>(TimeSpan.FromSeconds(Math.Pow(2, args.AttemptNumber)));
+        //return new ValueTask<TimeSpan?>(TimeSpan.FromSeconds(Math.Pow(2, args.AttemptNumber)));
+        return new ValueTask<TimeSpan?>(TimeSpan.FromSeconds(args.AttemptNumber));
     }
 
     public override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)

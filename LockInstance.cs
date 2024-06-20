@@ -17,7 +17,7 @@ public sealed class LockInstance : IEquatable<LockInstance>
 
     public bool IsArchived { get; private set; }
 
-    public bool IsTrusted { get; private set; } 
+    public bool IsTrusted { get; internal set; } 
 
     public bool IsKeyholderLock => _lock.Role == LockRole.Keyholder;
 
@@ -76,7 +76,9 @@ public sealed class LockInstance : IEquatable<LockInstance>
     #region Members
 
     private TimeSpan _timeAdjustment;
- 
+
+    private TimeSpan _pendingTimeChanges;
+
     private readonly Lock _lock;
 
     #endregion
@@ -110,7 +112,7 @@ public sealed class LockInstance : IEquatable<LockInstance>
 
     public void Unlock()
     {
-        if (!IsKeyholderLock)
+        if (!IsKeyholderLock || Lock.Status != LockStatus.Locked)
             return;
 
         IsLocked = false;
@@ -118,15 +120,14 @@ public sealed class LockInstance : IEquatable<LockInstance>
 
     public void Archive()
     {
-        if(IsKeyholderLock)
-            IsLocked = false;
-
+        Unlock();
         IsArchived = true;
     }
 
     public void AddTime(TimeSpan timeToAdd)
     {
         _timeAdjustment += timeToAdd;
+        _pendingTimeChanges += timeToAdd;
     }
 
     public void RemoveTime(TimeSpan timeToRemove)
@@ -135,6 +136,7 @@ public sealed class LockInstance : IEquatable<LockInstance>
             return;
 
         _timeAdjustment -= timeToRemove;
+        _pendingTimeChanges -= timeToRemove;
     }
 
     public void TrustKeyholder()
@@ -224,10 +226,10 @@ public sealed class LockInstance : IEquatable<LockInstance>
                 Processor.LogUpdateMaxTimeLimitAction(this, MaxLimitDateTime);
         }
 
-        if ((int)_timeAdjustment.TotalSeconds != 0)
+        if ((int)_pendingTimeChanges.TotalSeconds != 0)
         {
-            Processor.LogAddRemoveTimeAction(this, _timeAdjustment);
-            _timeAdjustment = TimeSpan.Zero;
+            Processor.LogAddRemoveTimeAction(this, _pendingTimeChanges);
+            _pendingTimeChanges = TimeSpan.Zero;
         }
     }
 
@@ -259,6 +261,11 @@ public sealed class LockInstance : IEquatable<LockInstance>
         var taskParams = Tasks.UserTasks.Select(x => new TaskActionParamsModel { Points = x.Points, Task = x.Task }).ToList();
 
         Processor.LogUpdateTasksAction(this, taskParams);
+    }
+
+    public void OverrideTrusted()
+    {
+        IsTrusted = true;
     }
 
     #region Equality
